@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llmobs-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llmobs-worker
+  template:
+    metadata:
+      labels:
+        app: llmobs-worker
+    spec:
+      containers:
+        - name: worker
+          image: llmobs-worker:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: POSTGRES_HOST
+              value: llmobs-postgres
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_USER
+              value: llmobs
+            - name: POSTGRES_PASSWORD
+              value: llmobs
+            - name: POSTGRES_DB
+              value: llmobs
+            - name: WORKER_POLL_SECONDS
+              value: "30"
+            - name: OLLAMA_BASE_URL
+              value: http://ollama:11434
+            - name: OLLAMA_JUDGE_MODEL
+              value: llama3.1

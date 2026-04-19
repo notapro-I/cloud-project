@@ -1,0 +1,96 @@
+{
+  "id": null,
+  "uid": "llm-observability-v1",
+  "title": "LLM Observability",
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Latency p50",
+      "gridPos": {"x": 0, "y": 0, "w": 8, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(request_latency_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p50"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Latency p95",
+      "gridPos": {"x": 8, "y": 0, "w": 8, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(request_latency_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p95"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Latency p99",
+      "gridPos": {"x": 16, "y": 0, "w": 8, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(request_latency_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p99"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Requests per Second",
+      "gridPos": {"x": 0, "y": 8, "w": 8, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "sum(rate(request_count[1m]))",
+          "legendFormat": "rps"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Tokens per Minute",
+      "gridPos": {"x": 8, "y": 8, "w": 8, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "sum(increase(token_usage_total[1m]))",
+          "legendFormat": "tokens/min"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Cost per Day (USD)",
+      "gridPos": {"x": 16, "y": 8, "w": 8, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "daily_cost_usd",
+          "legendFormat": "daily cost"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Quality Score Trends",
+      "gridPos": {"x": 0, "y": 16, "w": 24, "h": 8},
+      "datasource": {"type": "postgres", "uid": "PostgreSQL"},
+      "targets": [
+        {
+          "format": "time_series",
+          "rawSql": "SELECT q.created_at AS time, AVG(q.score) AS value FROM quality_scores q GROUP BY q.created_at ORDER BY q.created_at",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

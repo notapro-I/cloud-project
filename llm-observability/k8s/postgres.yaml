@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: llmobs-postgres
+spec:
+  serviceName: llmobs-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llmobs-postgres
+  template:
+    metadata:
+      labels:
+        app: llmobs-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          env:
+            - name: POSTGRES_USER
+              value: llmobs
+            - name: POSTGRES_PASSWORD
+              value: llmobs
+            - name: POSTGRES_DB
+              value: llmobs
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llmobs-postgres
+spec:
+  selector:
+    app: llmobs-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432

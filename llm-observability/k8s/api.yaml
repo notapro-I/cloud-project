@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llmobs-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llmobs-api
+  template:
+    metadata:
+      labels:
+        app: llmobs-api
+    spec:
+      containers:
+        - name: api
+          image: llmobs-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: POSTGRES_HOST
+              value: llmobs-postgres
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_USER
+              value: llmobs
+            - name: POSTGRES_PASSWORD
+              value: llmobs
+            - name: POSTGRES_DB
+              value: llmobs
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llmobs-api
+spec:
+  selector:
+    app: llmobs-api
+  ports:
+    - port: 8000
+      targetPort: 8000

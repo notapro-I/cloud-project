@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llmobs-grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llmobs-grafana
+  template:
+    metadata:
+      labels:
+        app: llmobs-grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:11.1.4
+          ports:
+            - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llmobs-grafana
+spec:
+  selector:
+    app: llmobs-grafana
+  ports:
+    - port: 3000
+      targetPort: 3000
