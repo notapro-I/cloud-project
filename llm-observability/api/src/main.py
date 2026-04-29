@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
+from src.routes.drift import router as drift_router
 from src.routes.prompts import router as prompts_router
 from src.routes.quality import router as quality_router
 from src.routes.requests import router as requests_router
@@ -37,6 +38,7 @@ app = FastAPI(title="LLM Observability API", version="1.0.0")
 app.include_router(requests_router)
 app.include_router(quality_router)
 app.include_router(prompts_router)
+app.include_router(drift_router)
 
 
 @app.get("/health")

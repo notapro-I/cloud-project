@@ -5,6 +5,7 @@ from logging.config import dictConfig
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from src.config import settings
+from src.tasks.drift_worker import detect_drift
 from src.tasks.quality_worker import process_quality_batch, run_quality_alert_check
 
 LOGGING_CONFIG = {
@@ -34,6 +35,7 @@ def main() -> None:
     scheduler = BackgroundScheduler()
     scheduler.add_job(process_quality_batch, "interval", seconds=settings.worker_poll_seconds, id="quality_scoring")
     scheduler.add_job(run_quality_alert_check, "interval", seconds=settings.worker_poll_seconds, id="quality_alerts")
+    scheduler.add_job(detect_drift, "interval", seconds=settings.worker_poll_seconds, id="drift_detection")
 
     scheduler.start()
     logger.info("worker_started", extra={"poll_seconds": settings.worker_poll_seconds})

@@ -45,18 +45,6 @@
     },
     {
       "type": "timeseries",
-      "title": "Requests per Second",
-      "gridPos": {"x": 0, "y": 8, "w": 8, "h": 8},
-      "datasource": {"type": "prometheus", "uid": "prometheus"},
-      "targets": [
-        {
-          "expr": "sum(rate(request_count[1m]))",
-          "legendFormat": "rps"
-        }
-      ]
-    },
-    {
-      "type": "timeseries",
       "title": "Tokens per Minute",
       "gridPos": {"x": 8, "y": 8, "w": 8, "h": 8},
       "datasource": {"type": "prometheus", "uid": "prometheus"},
@@ -88,6 +76,19 @@
         {
           "format": "time_series",
           "rawSql": "SELECT q.created_at AS time, AVG(q.score) AS value FROM quality_scores q GROUP BY q.created_at ORDER BY q.created_at",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Model Drift (Avg Tokens per Request)",
+      "gridPos": {"x": 0, "y": 24, "w": 24, "h": 8},
+      "datasource": {"type": "postgres", "uid": "PostgreSQL"},
+      "targets": [
+        {
+          "format": "time_series",
+          "rawSql": "SELECT detected_at AS time, model AS metric, delta_pct AS value FROM drift_metrics WHERE metric_name = 'total_tokens' ORDER BY detected_at",
           "refId": "A"
         }
       ]

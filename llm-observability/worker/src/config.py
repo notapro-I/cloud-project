@@ -8,10 +8,15 @@ class Settings(BaseSettings):
     postgres_host: str = "localhost"
     postgres_port: int = 5432
 
-    worker_poll_seconds: int = 30
+    worker_poll_seconds: int = 60
     quality_sample_rate: float = 0.10
     quality_threshold: float = 3.5
     quality_window_size: int = 50
+
+    drift_recent_count: int = 15
+    drift_baseline_count: int = 30
+    drift_min_samples: int = 10
+    drift_delta_threshold: float = 0.0
 
     ollama_base_url: str = "http://localhost:11434"
     ollama_judge_model: str = "llama3.1"

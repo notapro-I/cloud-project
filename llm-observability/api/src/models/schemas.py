@@ -59,3 +59,17 @@ class PromptTemplateOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class DriftMetricOut(BaseModel):
+    id: UUID
+    metric_name: str
+    model: str
+    prompt_template_id: UUID | None
+    baseline_value: float
+    recent_value: float
+    delta_pct: float | None
+    detected_at: datetime
+
+    class Config:
+        from_attributes = True

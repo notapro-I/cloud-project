@@ -39,9 +39,22 @@ CREATE TABLE IF NOT EXISTS quality_evaluation_queue (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS drift_metrics (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    metric_name TEXT NOT NULL,
+    model TEXT NOT NULL,
+    prompt_template_id UUID NULL REFERENCES prompt_templates(id) ON DELETE SET NULL,
+    baseline_value DOUBLE PRECISION NOT NULL,
+    recent_value DOUBLE PRECISION NOT NULL,
+    delta_pct DOUBLE PRECISION NULL,
+    detected_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE INDEX IF NOT EXISTS idx_llm_requests_created_at ON llm_requests(created_at);
 CREATE INDEX IF NOT EXISTS idx_llm_requests_model ON llm_requests(model);
 CREATE INDEX IF NOT EXISTS idx_llm_requests_prompt_template_id ON llm_requests(prompt_template_id);
 CREATE INDEX IF NOT EXISTS idx_quality_scores_created_at ON quality_scores(created_at);
 CREATE INDEX IF NOT EXISTS idx_quality_scores_request_id ON quality_scores(request_id);
 CREATE INDEX IF NOT EXISTS idx_eval_queue_processed ON quality_evaluation_queue(processed, sampled, created_at);
+CREATE INDEX IF NOT EXISTS idx_drift_metrics_detected_at ON drift_metrics(detected_at);
+CREATE INDEX IF NOT EXISTS idx_drift_metrics_model ON drift_metrics(model);
