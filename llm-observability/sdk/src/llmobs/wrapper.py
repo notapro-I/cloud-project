@@ -4,7 +4,12 @@ from time import perf_counter
 from typing import Any
 
 
-def observe_sync(observer: Any, model: str, prompt_template_id: str | None = None) -> Callable[..., Any]:
+def observe_sync(
+    observer: Any,
+    model: str,
+    prompt_template_id: str | None = None,
+    prompt_version: str | None = None,
+) -> Callable[..., Any]:
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
         def wrapped(*args: Any, **kwargs: Any) -> Any:
@@ -18,6 +23,7 @@ def observe_sync(observer: Any, model: str, prompt_template_id: str | None = Non
                 model=model,
                 latency_ms=latency_ms,
                 prompt_template_id=prompt_template_id,
+                prompt_version=prompt_version,
             )
             return result
 
@@ -26,7 +32,12 @@ def observe_sync(observer: Any, model: str, prompt_template_id: str | None = Non
     return decorator
 
 
-def observe_async(observer: Any, model: str, prompt_template_id: str | None = None) -> Callable[..., Any]:
+def observe_async(
+    observer: Any,
+    model: str,
+    prompt_template_id: str | None = None,
+    prompt_version: str | None = None,
+) -> Callable[..., Any]:
     def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
         @wraps(func)
         async def wrapped(*args: Any, **kwargs: Any) -> Any:
@@ -40,6 +51,7 @@ def observe_async(observer: Any, model: str, prompt_template_id: str | None = No
                 model=model,
                 latency_ms=latency_ms,
                 prompt_template_id=prompt_template_id,
+                prompt_version=prompt_version,
             )
             return result
 

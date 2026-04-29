@@ -12,6 +12,7 @@ router = APIRouter(tags=["quality"])
 def get_quality(
     limit: int = Query(default=50, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
+    prompt_version: str | None = Query(default=None),
     db: Session = Depends(get_db),
 ) -> list[QualityOut]:
-    return list_quality_scores(db, limit, offset)
+    return list_quality_scores(db, limit, offset, prompt_version=prompt_version)

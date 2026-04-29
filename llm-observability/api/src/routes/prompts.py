@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from src.db.database import get_db
+from src.models.entities import LLMRequest
 from src.models.schemas import PromptTemplateIn, PromptTemplateOut
 from src.services.request_service import create_prompt_template, list_prompt_templates
 
@@ -15,6 +17,23 @@ def get_prompts(
     db: Session = Depends(get_db),
 ) -> list[PromptTemplateOut]:
     return list_prompt_templates(db, limit, offset)
+
+
+@router.get("/prompts/versions", response_model=list[str])
+def get_prompt_versions(db: Session = Depends(get_db)) -> list[str]:
+    """Get all distinct prompt versions from requests"""
+    stmt = select(
+        func.coalesce(
+            func.nullif(func.trim(LLMRequest.prompt_version), ""),
+            "unversioned"
+        ).distinct()
+    ).order_by(
+        func.coalesce(
+            func.nullif(func.trim(LLMRequest.prompt_version), ""),
+            "unversioned"
+        )
+    )
+    return db.scalars(stmt).all()
 
 
 @router.post("/prompt-template", response_model=PromptTemplateOut)

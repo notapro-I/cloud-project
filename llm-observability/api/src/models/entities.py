@@ -36,6 +36,7 @@ class LLMRequest(Base):
         ForeignKey("prompt_templates.id", ondelete="SET NULL"),
         nullable=True,
     )
+    prompt_version: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
 

@@ -14,6 +14,7 @@ class RequestIngestPayload(BaseModel):
     total_tokens: int = Field(ge=0)
     cost: float = Field(ge=0)
     prompt_template_id: UUID | None = None
+    prompt_version: str | None = None
 
 
 class RequestOut(BaseModel):
@@ -27,6 +28,7 @@ class RequestOut(BaseModel):
     total_tokens: int
     cost: float
     prompt_template_id: UUID | None
+    prompt_version: str | None
     created_at: datetime
 
     class Config:
@@ -66,6 +68,7 @@ class DriftMetricOut(BaseModel):
     metric_name: str
     model: str
     prompt_template_id: UUID | None
+    prompt_version: str | None
     baseline_value: float
     recent_value: float
     delta_pct: float | None
