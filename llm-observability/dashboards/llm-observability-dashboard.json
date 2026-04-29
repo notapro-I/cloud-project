@@ -6,6 +6,26 @@
   "schemaVersion": 39,
   "version": 1,
   "refresh": "10s",
+  "templating": {
+    "list": [
+      {
+        "name": "prompt_version",
+        "type": "query",
+        "label": "Prompt Version",
+        "datasource": {"type": "postgres", "uid": "PostgreSQL"},
+        "query": "SELECT DISTINCT COALESCE(NULLIF(TRIM(prompt_version), ''), 'unversioned') AS value FROM llm_requests ORDER BY value",
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "refresh": 2,
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        }
+      }
+    ]
+  },
   "panels": [
     {
       "type": "timeseries",
@@ -14,7 +34,7 @@
       "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(request_latency_seconds_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(request_latency_seconds_bucket{prompt_version=~\"${prompt_version:regex}\"}[5m])) by (le))",
           "legendFormat": "p50"
         }
       ]
@@ -26,7 +46,7 @@
       "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum(rate(request_latency_seconds_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(request_latency_seconds_bucket{prompt_version=~\"${prompt_version:regex}\"}[5m])) by (le))",
           "legendFormat": "p95"
         }
       ]
@@ -38,7 +58,7 @@
       "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(request_latency_seconds_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(request_latency_seconds_bucket{prompt_version=~\"${prompt_version:regex}\"}[5m])) by (le))",
           "legendFormat": "p99"
         }
       ]
@@ -50,7 +70,7 @@
       "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {
-          "expr": "sum(increase(token_usage_total[1m]))",
+          "expr": "sum(increase(token_usage_total{prompt_version=~\"${prompt_version:regex}\"}[1m]))",
           "legendFormat": "tokens/min"
         }
       ]
@@ -62,7 +82,7 @@
       "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {
-          "expr": "daily_cost_usd",
+          "expr": "sum(daily_cost_usd{prompt_version=~\"${prompt_version:regex}\"})",
           "legendFormat": "daily cost"
         }
       ]
@@ -75,7 +95,7 @@
       "targets": [
         {
           "format": "time_series",
-          "rawSql": "SELECT q.created_at AS time, AVG(q.score) AS value FROM quality_scores q GROUP BY q.created_at ORDER BY q.created_at",
+          "rawSql": "SELECT q.created_at AS time, AVG(q.score) AS value FROM quality_scores q JOIN llm_requests r ON r.id = q.request_id WHERE COALESCE(NULLIF(TRIM(r.prompt_version), ''), 'unversioned') ~ '${prompt_version:regex}' GROUP BY q.created_at ORDER BY q.created_at",
           "refId": "A"
         }
       ]
@@ -88,7 +108,7 @@
       "targets": [
         {
           "format": "time_series",
-          "rawSql": "SELECT detected_at AS time, model AS metric, delta_pct AS value FROM drift_metrics WHERE metric_name = 'total_tokens' ORDER BY detected_at",
+          "rawSql": "SELECT detected_at AS time, CONCAT(model, ' / ', COALESCE(NULLIF(TRIM(prompt_version), ''), 'unversioned')) AS metric, delta_pct AS value FROM drift_metrics WHERE metric_name = 'total_tokens' AND COALESCE(NULLIF(TRIM(prompt_version), ''), 'unversioned') ~ '${prompt_version:regex}' ORDER BY detected_at",
           "refId": "A"
         }
       ]

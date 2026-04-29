@@ -22,18 +22,20 @@ def detect_drift() -> int:
     query = """
         WITH ordered AS (
             SELECT model,
+                 COALESCE(NULLIF(TRIM(prompt_version), ''), 'unversioned') AS prompt_version,
                    latency_ms,
                    total_tokens,
                    cost,
                    LENGTH(response) AS response_len,
                    ROW_NUMBER() OVER (
-                        PARTITION BY model
+                   PARTITION BY model, COALESCE(NULLIF(TRIM(prompt_version), ''), 'unversioned')
                         ORDER BY created_at DESC
                    ) AS rn
             FROM llm_requests
         ),
         recent AS (
-            SELECT model,
+             SELECT model,
+                 prompt_version,
                    COUNT(*) AS recent_count,
                    AVG(latency_ms) AS recent_latency,
                    AVG(total_tokens) AS recent_tokens,
@@ -41,10 +43,11 @@ def detect_drift() -> int:
                    AVG(response_len) AS recent_response_len
             FROM ordered
             WHERE rn <= %s
-            GROUP BY model
+             GROUP BY model, prompt_version
         ),
         baseline AS (
-            SELECT model,
+             SELECT model,
+                 prompt_version,
                    COUNT(*) AS baseline_count,
                    AVG(latency_ms) AS baseline_latency,
                    AVG(total_tokens) AS baseline_tokens,
@@ -52,9 +55,10 @@ def detect_drift() -> int:
                    AVG(response_len) AS baseline_response_len
             FROM ordered
             WHERE rn > %s AND rn <= %s
-            GROUP BY model
+             GROUP BY model, prompt_version
         )
         SELECT r.model,
+             r.prompt_version,
                r.recent_count,
                b.baseline_count,
                r.recent_latency,
@@ -66,7 +70,7 @@ def detect_drift() -> int:
                r.recent_response_len,
                b.baseline_response_len
         FROM recent r
-        JOIN baseline b ON b.model = r.model
+         JOIN baseline b ON b.model = r.model AND b.prompt_version = r.prompt_version
     """
 
     with get_conn() as conn:
@@ -75,6 +79,7 @@ def detect_drift() -> int:
             for row in cur.fetchall():
                 (
                     model,
+                    prompt_version,
                     recent_count,
                     baseline_count,
                     recent_latency,
@@ -110,13 +115,14 @@ def detect_drift() -> int:
                             metric_name,
                             model,
                             prompt_template_id,
+                            prompt_version,
                             baseline_value,
                             recent_value,
                             delta_pct
                         )
-                        VALUES (%s, %s, %s, %s, %s, %s)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
                         """,
-                        (metric_name, model, None, baseline_value, recent_value, delta_pct),
+                        (metric_name, model, None, prompt_version, baseline_value, recent_value, delta_pct),
                     )
                     rows_inserted += 1
 

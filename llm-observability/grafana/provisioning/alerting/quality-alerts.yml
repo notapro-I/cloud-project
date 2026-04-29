@@ -19,22 +19,21 @@ groups:
               format: time_series
               rawSql: |
                 WITH recent AS (
-                  SELECT r.prompt_template_id,
+                  SELECT COALESCE(NULLIF(TRIM(r.prompt_version), ''), 'unversioned') AS prompt_version,
                          q.score,
                          ROW_NUMBER() OVER (
-                           PARTITION BY r.prompt_template_id
+                           PARTITION BY COALESCE(NULLIF(TRIM(r.prompt_version), ''), 'unversioned')
                            ORDER BY q.created_at DESC
                          ) AS rn
                   FROM quality_scores q
                   JOIN llm_requests r ON r.id = q.request_id
-                  WHERE r.prompt_template_id IS NOT NULL
                 )
                 SELECT NOW() AS time,
-                       prompt_template_id::text AS metric,
+                       prompt_version AS metric,
                        AVG(score) AS value
                 FROM recent
                 WHERE rn <= 5
-                GROUP BY prompt_template_id
+                GROUP BY prompt_version
               refId: A
           - refId: B
             datasourceUid: __expr__
@@ -53,7 +52,7 @@ groups:
         execErrState: Error
         for: 5m
         annotations:
-          summary: Quality average dropped to 4 or below
-          description: Average quality score over the last 5 samples is 4 or lower.
+          summary: Quality average dropped to 4 or below for a prompt version
+          description: Average quality score over the last 5 samples is 4 or lower for at least one prompt version.
         labels:
           severity: warning

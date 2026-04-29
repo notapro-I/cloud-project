@@ -14,6 +14,7 @@ class LLMObservation(BaseModel):
     total_tokens: int = Field(ge=0)
     cost: float = Field(ge=0)
     prompt_template_id: str | None = None
+    prompt_version: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 

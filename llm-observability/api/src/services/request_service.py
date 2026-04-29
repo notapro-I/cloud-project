@@ -34,19 +34,31 @@ def ingest_request(db: Session, payload: RequestIngestPayload) -> LLMRequest:
         input_tokens=row.input_tokens,
         output_tokens=row.output_tokens,
         cost=row.cost,
+        prompt_version=row.prompt_version,
     )
     db.commit()
     db.refresh(row)
     return row
 
 
-def list_requests(db: Session, limit: int, offset: int) -> list[LLMRequest]:
-    stmt = select(LLMRequest).order_by(LLMRequest.created_at.desc()).limit(limit).offset(offset)
+def list_requests(db: Session, limit: int, offset: int, prompt_version: str | None = None) -> list[LLMRequest]:
+    stmt = select(LLMRequest)
+    if prompt_version is not None:
+        stmt = stmt.where(LLMRequest.prompt_version == prompt_version)
+    stmt = stmt.order_by(LLMRequest.created_at.desc()).limit(limit).offset(offset)
     return list(db.scalars(stmt).all())
 
 
-def list_quality_scores(db: Session, limit: int, offset: int) -> list[QualityScore]:
-    stmt = select(QualityScore).order_by(QualityScore.created_at.desc()).limit(limit).offset(offset)
+def list_quality_scores(
+    db: Session,
+    limit: int,
+    offset: int,
+    prompt_version: str | None = None,
+) -> list[QualityScore]:
+    stmt = select(QualityScore).join(LLMRequest, LLMRequest.id == QualityScore.request_id)
+    if prompt_version is not None:
+        stmt = stmt.where(LLMRequest.prompt_version == prompt_version)
+    stmt = stmt.order_by(QualityScore.created_at.desc()).limit(limit).offset(offset)
     return list(db.scalars(stmt).all())
 
 

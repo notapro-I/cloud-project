@@ -17,6 +17,7 @@ def post_ingest(payload: RequestIngestPayload, db: Session = Depends(get_db)) ->
 def get_requests(
     limit: int = Query(default=50, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
+    prompt_version: str | None = Query(default=None),
     db: Session = Depends(get_db),
 ) -> list[RequestOut]:
-    return list_requests(db, limit, offset)
+    return list_requests(db, limit, offset, prompt_version=prompt_version)

@@ -38,6 +38,8 @@ A modular observability platform for LLM workloads with Python SDK instrumentati
 
 Use `.env.example` as a template and create `.env` if needed.
 
+This project uses init-only SQL schema bootstrapping via `migrations/001_init.sql`. If schema changes are made, recreate the PostgreSQL volume so the init script is applied from scratch.
+
 ## Run locally with Docker Compose
 
 ```bash
@@ -72,6 +74,12 @@ Read quality:
 curl http://localhost:8000/quality
 ```
 
+Read requests for one prompt version:
+
+```bash
+curl "http://localhost:8000/requests?prompt_version=v1"
+```
+
 Read metrics:
 
 ```bash
@@ -101,12 +109,22 @@ set PYTHONPATH=sdk/src
 python examples/example_usage.py
 ```
 
+Send a synchronous batch across multiple prompt versions:
+
+```bash
+set PYTHONPATH=sdk/src
+python examples/batch_prompt_versions.py --count 50 --versions v1 v2 v3
+```
+
+When sending telemetry, include `prompt_version` (for example `v1`, `v2`) in ingest payloads or SDK observation calls. Version labels are propagated to Prometheus metrics and are used by dashboard filters, drift detection, and quality alerting.
+
 ## Notes on design
 
 - Token estimation falls back to lightweight heuristics if provider usage metadata is unavailable.
 - Cost uses a simple model pricing map with configurable defaults.
 - Sampling for quality scoring is performed at ingestion time and processed asynchronously.
-- Alerting currently emits structured logs when average quality for a prompt template drops below threshold.
+- Alerting emits structured logs when average quality for a prompt version drops below threshold.
+- Grafana prompt-version dropdown values are discovered automatically from observed request data, so new versions appear without manual dashboard edits.
 
 ## Kubernetes local usage
 

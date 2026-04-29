@@ -98,6 +98,7 @@ class LLMObserver:
         model: str,
         latency_ms: float,
         prompt_template_id: str | None = None,
+        prompt_version: str | None = None,
     ) -> LLMObservation:
         response_text = self._extract_text(result)
         input_tokens, output_tokens, total_tokens = self._extract_usage(result, prompt, response_text)
@@ -112,6 +113,7 @@ class LLMObserver:
             total_tokens=total_tokens,
             cost=cost,
             prompt_template_id=prompt_template_id,
+            prompt_version=prompt_version,
         )
         self._executor.submit(self._post_observation, obs)
         return obs
@@ -123,6 +125,7 @@ class LLMObserver:
         model: str,
         latency_ms: float,
         prompt_template_id: str | None = None,
+        prompt_version: str | None = None,
     ) -> LLMObservation:
         response_text = self._extract_text(result)
         input_tokens, output_tokens, total_tokens = self._extract_usage(result, prompt, response_text)
@@ -137,6 +140,7 @@ class LLMObserver:
             total_tokens=total_tokens,
             cost=cost,
             prompt_template_id=prompt_template_id,
+            prompt_version=prompt_version,
         )
         try:
             loop = asyncio.get_running_loop()
@@ -145,7 +149,13 @@ class LLMObserver:
             self._executor.submit(self._post_observation, obs)
         return obs
 
-    def call_openai_chat(self, model: str, prompt: str, prompt_template_id: str | None = None) -> OpenAIChatResponse:
+    def call_openai_chat(
+        self,
+        model: str,
+        prompt: str,
+        prompt_template_id: str | None = None,
+        prompt_version: str | None = None,
+    ) -> OpenAIChatResponse:
         start = perf_counter()
         headers = {"Content-Type": "application/json"}
         if self.openai_api_key:
@@ -165,10 +175,17 @@ class LLMObserver:
             model=model,
             latency_ms=(perf_counter() - start) * 1000.0,
             prompt_template_id=prompt_template_id,
+            prompt_version=prompt_version,
         )
         return OpenAIChatResponse(content=content, usage=usage, raw=raw)
 
-    def call_ollama(self, model: str, prompt: str, prompt_template_id: str | None = None) -> dict[str, Any]:
+    def call_ollama(
+        self,
+        model: str,
+        prompt: str,
+        prompt_template_id: str | None = None,
+        prompt_version: str | None = None,
+    ) -> dict[str, Any]:
         start = perf_counter()
         payload = {"model": model, "prompt": prompt, "stream": False}
         response = self._client.post(f"{self.ollama_base_url}/api/generate", json=payload)
@@ -186,6 +203,7 @@ class LLMObserver:
             model=model,
             latency_ms=(perf_counter() - start) * 1000.0,
             prompt_template_id=prompt_template_id,
+            prompt_version=prompt_version,
         )
         return raw
 
@@ -194,6 +212,7 @@ class LLMObserver:
         model: str,
         prompt: str,
         prompt_template_id: str | None = None,
+        prompt_version: str | None = None,
     ) -> OpenAIChatResponse:
         start = perf_counter()
         headers = {"Content-Type": "application/json"}
@@ -218,6 +237,7 @@ class LLMObserver:
             model=model,
             latency_ms=(perf_counter() - start) * 1000.0,
             prompt_template_id=prompt_template_id,
+            prompt_version=prompt_version,
         )
         return OpenAIChatResponse(content=content, usage=usage, raw=raw)
 
@@ -226,6 +246,7 @@ class LLMObserver:
         model: str,
         prompt: str,
         prompt_template_id: str | None = None,
+        prompt_version: str | None = None,
     ) -> dict[str, Any]:
         start = perf_counter()
         payload = {"model": model, "prompt": prompt, "stream": False}
@@ -244,5 +265,6 @@ class LLMObserver:
             model=model,
             latency_ms=(perf_counter() - start) * 1000.0,
             prompt_template_id=prompt_template_id,
+            prompt_version=prompt_version,
         )
         return raw
