@@ -13,12 +13,12 @@ logger = logging.getLogger(__name__)
 def _judge_prompt(prompt: str, response: str) -> str:
     return (
         "You are a strict evaluator. Rate the assistant response on correctness, relevance, and completeness. "
-        "Return valid JSON only with fields: score (1-5), feedback (short string).\n\n"
+        "Return valid JSON only with field: score (1-5).\n\n"
         f"Prompt:\n{prompt}\n\nResponse:\n{response}"
     )
 
 
-def _run_judge_model(prompt: str, response: str) -> tuple[float, str]:
+def _run_judge_model(prompt: str, response: str) -> float:
     payload = {
         "model": settings.ollama_judge_model,
         "prompt": _judge_prompt(prompt, response),
@@ -33,13 +33,11 @@ def _run_judge_model(prompt: str, response: str) -> tuple[float, str]:
     try:
         parsed = json.loads(raw_text)
         score = float(parsed.get("score", 3.0))
-        feedback = str(parsed.get("feedback", "No feedback."))
     except json.JSONDecodeError:
         score = 3.0
-        feedback = "Judge output was non-JSON; defaulted score."
 
     score = min(max(score, 1.0), 5.0)
-    return score, feedback
+    return score
 
 
 def process_quality_batch(limit: int = 100) -> int:
@@ -61,7 +59,7 @@ def process_quality_batch(limit: int = 100) -> int:
 
             for request_id, prompt, response in rows:
                 try:
-                    score, feedback = _run_judge_model(prompt, response)
+                    score = _run_judge_model(prompt, response)
                     cur.execute(
                         """
                         INSERT INTO quality_scores (request_id, score, feedback)
@@ -71,7 +69,7 @@ def process_quality_batch(limit: int = 100) -> int:
                             feedback = EXCLUDED.feedback,
                             created_at = NOW()
                         """,
-                        (str(request_id), score, feedback),
+                        (str(request_id), score, None),
                     )
                     cur.execute(
                         """

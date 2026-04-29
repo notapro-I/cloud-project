@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     drift_delta_threshold: float = 0.0
 
     ollama_base_url: str = "http://localhost:11434"
-    ollama_judge_model: str = "llama3.1"
+    ollama_judge_model: str = "mistral"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

@@ -3,7 +3,7 @@ apiVersion: 1
 groups:
   - orgId: 1
     name: quality-alerts
-    folder: LLM Observability
+    folder: LLM Observability Alerts
     interval: 1m
     rules:
       - uid: quality-threshold-breach
@@ -12,6 +12,9 @@ groups:
         data:
           - refId: A
             datasourceUid: PostgreSQL
+            relativeTimeRange:
+              from: 600
+              to: 0
             model:
               format: time_series
               rawSql: |
