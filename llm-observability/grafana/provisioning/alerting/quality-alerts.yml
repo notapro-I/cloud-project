@@ -1,0 +1,56 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: quality-alerts
+    folder: LLM Observability
+    interval: 1m
+    rules:
+      - uid: quality-threshold-breach
+        title: Quality threshold breach
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: PostgreSQL
+            model:
+              format: time_series
+              rawSql: |
+                WITH recent AS (
+                  SELECT r.prompt_template_id,
+                         q.score,
+                         ROW_NUMBER() OVER (
+                           PARTITION BY r.prompt_template_id
+                           ORDER BY q.created_at DESC
+                         ) AS rn
+                  FROM quality_scores q
+                  JOIN llm_requests r ON r.id = q.request_id
+                  WHERE r.prompt_template_id IS NOT NULL
+                )
+                SELECT NOW() AS time,
+                       prompt_template_id::text AS metric,
+                       AVG(score) AS value
+                FROM recent
+                WHERE rn <= 5
+                GROUP BY prompt_template_id
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              type: reduce
+              expression: A
+              reducer: last
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              params:
+                - 4
+        noDataState: NoData
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: Quality average dropped to 4 or below
+          description: Average quality score over the last 5 samples is 4 or lower.
+        labels:
+          severity: warning
